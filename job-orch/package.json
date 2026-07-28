@@ -3,11 +3,13 @@
     "version": "1.0.0",
     "type": "module",
     "scripts": {
-      "dev": "tsx watch src/index.ts",
-      "build": "tsc",
-      "start": "node dist/index.js",
-      "migrate": "tsx src/migrate.ts"
-    },
+  "dev": "tsx watch src/index.ts",
+  "worker": "tsx watch src/worker.ts",
+  "build": "tsc",
+  "start": "node dist/index.js",
+  "poller": "tsx watch src/poller.ts",
+  "migrate": "tsx src/migrate.ts"
+},
     "dependencies": {
       "express": "^4.19.2",
       "pg": "^8.12.0",
