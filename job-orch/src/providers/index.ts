@@ -1,4 +1,4 @@
-import { ProviderAdapter } from './types.js';
+import type { ProviderAdapter } from './types.js';
 import { fakeReplicate } from './fakeReplicate.js';
 import { fakeElevenLabs } from './fakeElevenLabs.js';
 
