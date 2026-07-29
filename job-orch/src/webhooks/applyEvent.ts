@@ -10,7 +10,7 @@ interface ProviderEvent {
 
 // Rank lets us compare "how far along" a status is, so we can ignore
 // an event that's older/less-advanced than what we already recorded.
-const STATUS_RANK: Record<string, number> = {
+const STATUS_RANK: Record<'pending' | ProviderEvent['status'], number> = {
   pending: 0,
   processing: 1,
   succeeded: 2,
@@ -55,7 +55,8 @@ export async function applyProviderEvent(event: ProviderEvent) {
       return;
     }
 
-    if (STATUS_RANK[event.status] < STATUS_RANK[job.status]) {
+    const currentStatusRank = STATUS_RANK[job.status as keyof typeof STATUS_RANK] ?? -1;
+    if (STATUS_RANK[event.status] < currentStatusRank) {
       // Out-of-order: this event represents an earlier stage than what
       // we've already recorded. Drop it.
       await client.query('ROLLBACK');
