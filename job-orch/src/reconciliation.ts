@@ -61,7 +61,7 @@ async function reconcileJob(job: any, report: ReconciliationReport) {
       providerJobId: job.provider_job_id,
       status: statusResult.status,
       output: statusResult.output,
-    });
+    } as any);
     console.warn(
       `RECONCILED: job ${job.id} was stuck in 'processing' — provider says ${statusResult.status}. Applied now.`
     );
