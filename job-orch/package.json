@@ -4,13 +4,14 @@
     "type": "module",
     "scripts": {
         "dev": "tsx watch src/index.ts",
-        "test": "vitest run",
         "worker": "tsx watch src/worker.ts",
         "build": "tsc",
         "start": "node dist/index.js",
         "poller": "tsx watch src/poller.ts",
         "migrate": "tsx src/migrate.ts",
-        "reconcile": "tsx src/reconciliation.ts"
+        "reconcile": "tsx src/reconciliation.ts",
+
+        "test": "vitest run"
     },
     "dependencies": {
         "dotenv": "^16.4.5",

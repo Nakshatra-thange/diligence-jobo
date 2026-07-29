@@ -27,3 +27,10 @@ CREATE TABLE IF NOT EXISTS webhook_events (
   received_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (provider, provider_event_id)
 );
+
+CREATE TABLE IF NOT EXISTS fake_provider_jobs (
+  provider_job_id TEXT PRIMARY KEY,
+  status TEXT NOT NULL,
+  ready_at TIMESTAMPTZ NOT NULL,
+  output JSONB
+);
