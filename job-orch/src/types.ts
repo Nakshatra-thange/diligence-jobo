@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const CreateJobSchema = z.object({
   idempotency_key: z.string().min(1).max(255),
-  provider: z.enum(['replicate', 'elevenlabs']), // extend as needed
+  provider: z.enum(['replicate', 'elevenlabs']),
   input: z.record(z.unknown()),
 });
 

@@ -10,9 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const UNIQUE_VIOLATION = '23505';
 
-// Capture the raw request body BEFORE JSON parsing mutates it into an
-// object — signature verification needs the exact bytes the provider
-// signed, not our re-serialized version of them.
+
 app.use(
   express.json({
     verify: (req, _res, buf) => {

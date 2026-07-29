@@ -8,7 +8,7 @@ async function migrate() {
     'utf-8'
   );
 
-  // gen_random_uuid() needs pgcrypto on older Postgres (Postgres 13+ has it built in as of 13, but this is a safe no-op if already enabled)
+
   await pool.query('CREATE EXTENSION IF NOT EXISTS pgcrypto;');
   await pool.query(sql);
 

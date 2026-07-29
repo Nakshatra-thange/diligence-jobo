@@ -6,7 +6,7 @@ import { applyProviderEvent } from './webhooks/applyEvent.js';
 dotenv.config();
 
 const POLL_INTERVAL_MS = 5000;
-const STALE_AFTER_MS = 4000; // don't poll something webhooks just updated seconds ago
+const STALE_AFTER_MS = 4000; 
 
 async function pollProcessingJobs() {
   const result = await pool.query(
@@ -32,7 +32,7 @@ async function pollProcessingJobs() {
             }),
           });;
       }
-      // still processing — nothing to do, will check again next tick
+
     } catch (err) {
       console.error(`Poll failed for job ${job.id}:`, (err as Error).message);
     }

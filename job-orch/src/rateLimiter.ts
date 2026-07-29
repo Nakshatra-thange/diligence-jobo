@@ -1,6 +1,6 @@
 interface BucketConfig {
-    capacity: number;     // max tokens (burst allowance)
-    refillPerSec: number; // tokens added per second
+    capacity: number;     
+    refillPerSec: number; 
   }
   
   class TokenBucket {

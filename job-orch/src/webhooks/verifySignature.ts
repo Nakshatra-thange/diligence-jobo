@@ -1,8 +1,6 @@
 import crypto from 'node:crypto';
 
-// Real providers sign webhook payloads with HMAC so you can trust the
-// request actually came from them, not from someone spoofing a "job
-// succeeded" event to your public endpoint.
+
 export function verifySignature(
   rawBody: Buffer,
   signatureHeader: string | undefined,

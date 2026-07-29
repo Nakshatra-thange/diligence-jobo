@@ -8,13 +8,11 @@ interface ProviderEvent {
   errorMessage?: string;
 }
 
-// Rank lets us compare "how far along" a status is, so we can ignore
-// an event that's older/less-advanced than what we already recorded.
 const STATUS_RANK: Record<'pending' | ProviderEvent['status'], number> = {
   pending: 0,
   processing: 1,
   succeeded: 2,
-  failed: 2, // succeeded/failed are both terminal — neither outranks the other
+  failed: 2, 
 };
 
 const TERMINAL = new Set(['succeeded', 'failed']);
@@ -30,11 +28,7 @@ export async function applyProviderEvent(event: ProviderEvent) {
     );
 
     if (result.rows.length === 0) {
-      // Job not found yet — can happen if a webhook races ahead of our
-      // own DB write after submitJob(). We don't lose the event: it's
-      // already durably stored in webhook_events by the caller, and
-      // the Part 4 reconciliation job will catch anything that stays
-      // stuck. Nothing more to do here right now.
+ 
       await client.query('ROLLBACK');
       console.warn(
         `No job found for ${event.provider}/${event.providerJobId} — event recorded, will reconcile later`
@@ -45,9 +39,7 @@ export async function applyProviderEvent(event: ProviderEvent) {
     const job = result.rows[0];
 
     if (TERMINAL.has(job.status)) {
-      // Already terminal — ignore anything arriving after (e.g. a
-      // stale "processing" event arriving after "succeeded" due to
-      // network reordering, or a duplicate terminal event resending).
+      
       await client.query('ROLLBACK');
       console.log(
         `Ignoring event for job ${job.id}: already terminal (${job.status})`
@@ -57,8 +49,7 @@ export async function applyProviderEvent(event: ProviderEvent) {
 
     const currentStatusRank = STATUS_RANK[job.status as keyof typeof STATUS_RANK] ?? -1;
     if (STATUS_RANK[event.status] < currentStatusRank) {
-      // Out-of-order: this event represents an earlier stage than what
-      // we've already recorded. Drop it.
+
       await client.query('ROLLBACK');
       console.log(
         `Ignoring stale event for job ${job.id}: ${event.status} arrived after ${job.status}`

@@ -1,8 +1,8 @@
 type CircuitState = 'closed' | 'open' | 'half_open';
 
 interface BreakerConfig {
-  failureThreshold: number; // consecutive failures before opening
-  cooldownMs: number;       // how long to stay open before trying again
+  failureThreshold: number; 
+  cooldownMs: number;       
 }
 
 class CircuitBreaker {

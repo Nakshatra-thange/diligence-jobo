@@ -41,9 +41,7 @@ async function processJob(job: any) {
   const breaker = getBreaker(job.provider);
   const bucket = getBucket(job.provider);
 
-  // Rate limit check happens before we even attempt the call — this is
-  // what prevents the 429s in Part 2 from happening in the first place,
-  // rather than just cleaning them up after.
+
   if (!bucket.tryConsume()) {
     const waitMs = bucket.msUntilNextToken();
     console.log(`Rate limit: deferring job ${job.id} for ${waitMs}ms (${job.provider})`);

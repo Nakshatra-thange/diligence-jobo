@@ -34,9 +34,6 @@ webhookRouter.post('/webhooks/:provider', async (req, res) => {
     return res.status(400).json({ error: 'malformed_payload' });
   }
 
-  // Dedupe at the storage layer: the UNIQUE(provider, provider_event_id)
-  // constraint means a duplicate delivery simply fails to insert here,
-  // and we return 200 without touching job state a second time.
   const inserted = await pool.query(
     `INSERT INTO webhook_events (provider, provider_event_id, payload)
      VALUES ($1, $2, $3)

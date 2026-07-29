@@ -6,13 +6,13 @@ import { applyProviderEvent } from './webhooks/applyEvent.js';
 dotenv.config();
 
 const RUN_INTERVAL_MS = 30_000;
-const PENDING_STUCK_AFTER_MS = 60_000;   // never picked up by a worker
-const PROCESSING_STUCK_AFTER_MS = 60_000; // submitted, but no terminal update ever arrived
+const PENDING_STUCK_AFTER_MS = 60_000;   
+const PROCESSING_STUCK_AFTER_MS = 60_000;
 
 interface ReconciliationReport {
   checked: number;
   resolved: number;
-  orphaned: number; // provider has no record of this job at all
+  orphaned: number; 
   stillPending: number;
 }
 
@@ -42,20 +42,17 @@ async function reconcileJob(job: any, report: ReconciliationReport) {
     return;
   }
 
-  // status === 'processing' with a provider_job_id — ask the provider directly.
+  
   try {
     const adapter = getProvider(job.provider);
     const statusResult = await adapter.getJobStatus(job.provider_job_id);
 
     if (statusResult.status === 'processing') {
-      // Provider genuinely still working on it — not a bug, just slow.
+   
       return;
     }
 
-    // Provider has a terminal result we never recorded — the webhook
-    // was lost and the poller's own window hadn't caught it yet (or
-    // the poller process itself was down). This is the case that
-    // silently loses money in real systems if nothing catches it.
+
     await applyProviderEvent({
       provider: job.provider,
       providerJobId: job.provider_job_id,
