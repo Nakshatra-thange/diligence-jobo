@@ -1,72 +1,52 @@
-/**
- * Small in-memory token bucket used by the worker before it submits work to a
- * provider. Buckets are intentionally per provider: a burst of ElevenLabs
- * requests must not consume Replicate's allowance.
- *
- * A distributed deployment should back this with Redis (or the queue itself),
- * but keeping this seam local makes the worker safe for a single process and
- * makes provider limits explicit in one place.
- */
-export class TokenBucket {
-  private tokens: number;
-  private lastRefillAt = Date.now();
-
-  constructor(
-    private readonly capacity: number,
-    private readonly refillEveryMs: number
-  ) {
-    if (capacity <= 0 || refillEveryMs <= 0) {
-      throw new Error('Token bucket capacity and refill interval must be positive');
+interface BucketConfig {
+    capacity: number;     // max tokens (burst allowance)
+    refillPerSec: number; // tokens added per second
+  }
+  
+  class TokenBucket {
+    private tokens: number;
+    private lastRefill: number;
+  
+    constructor(private config: BucketConfig) {
+      this.tokens = config.capacity;
+      this.lastRefill = Date.now();
     }
-    this.tokens = capacity;
-  }
-
-  tryConsume(tokens = 1): boolean {
-    if (tokens <= 0) {
-      throw new Error('Token count must be positive');
+  
+    private refill() {
+      const now = Date.now();
+      const elapsedSec = (now - this.lastRefill) / 1000;
+      const toAdd = elapsedSec * this.config.refillPerSec;
+      this.tokens = Math.min(this.config.capacity, this.tokens + toAdd);
+      this.lastRefill = now;
     }
-
-    this.refill();
-    if (this.tokens < tokens) return false;
-
-    this.tokens -= tokens;
-    return true;
+  
+    tryConsume(): boolean {
+      this.refill();
+      if (this.tokens >= 1) {
+        this.tokens -= 1;
+        return true;
+      }
+      return false;
+    }
+  
+    msUntilNextToken(): number {
+      this.refill();
+      if (this.tokens >= 1) return 0;
+      const deficit = 1 - this.tokens;
+      return Math.ceil((deficit / this.config.refillPerSec) * 1000);
+    }
   }
-
-  msUntilNextToken(): number {
-    this.refill();
-    if (this.tokens >= 1) return 0;
-
-    const elapsed = Date.now() - this.lastRefillAt;
-    return Math.max(1, this.refillEveryMs - elapsed);
+  
+  // Rough real-world numbers: Replicate tolerates more burst,
+  // ElevenLabs is tighter — matches the failure profiles in Part 2.
+  const buckets: Record<string, TokenBucket> = {
+    replicate: new TokenBucket({ capacity: 10, refillPerSec: 5 }),
+    elevenlabs: new TokenBucket({ capacity: 4, refillPerSec: 1 }),
+  };
+  
+  export function getBucket(provider: string): TokenBucket {
+    if (!buckets[provider]) {
+      buckets[provider] = new TokenBucket({ capacity: 5, refillPerSec: 2 });
+    }
+    return buckets[provider];
   }
-
-  private refill(): void {
-    const now = Date.now();
-    const elapsed = now - this.lastRefillAt;
-    const tokensToAdd = Math.floor(elapsed / this.refillEveryMs);
-    if (tokensToAdd <= 0) return;
-
-    this.tokens = Math.min(this.capacity, this.tokens + tokensToAdd);
-    this.lastRefillAt += tokensToAdd * this.refillEveryMs;
-  }
-}
-
-const providerLimits: Record<string, { capacity: number; refillEveryMs: number }> = {
-  // Keep the sample conservative; production values should come from each
-  // provider's documented quota or account-level configuration.
-  replicate: { capacity: 10, refillEveryMs: 1_000 },
-  elevenlabs: { capacity: 5, refillEveryMs: 1_000 },
-};
-
-const buckets = new Map<string, TokenBucket>();
-
-export function getBucket(providerName: string): TokenBucket {
-  let bucket = buckets.get(providerName);
-  if (!bucket) {
-    const limit = providerLimits[providerName] ?? { capacity: 3, refillEveryMs: 1_000 };
-    bucket = new TokenBucket(limit.capacity, limit.refillEveryMs);
-    buckets.set(providerName, bucket);
-  }
-  return bucket;
-}
